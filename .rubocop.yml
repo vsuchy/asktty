@@ -1,0 +1,16 @@
+plugins:
+  - rubocop-minitest
+  - rubocop-rake
+
+# --- Disabled ---
+
+Metrics:
+  Enabled: false
+
+# --- Overrides ---
+
+Layout/LineLength:
+  Max: 120
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
