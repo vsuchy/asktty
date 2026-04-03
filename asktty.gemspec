@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "asktty"
   spec.version = AskTTY::VERSION
   spec.authors = ["Vlad Suchy"]
-  spec.summary = "Terminal forms and prompts for Ruby."
+  spec.summary = "Terminal prompts for Ruby."
 
   spec.homepage = "https://github.com/vsuchy/asktty"
   spec.license = "MIT"
