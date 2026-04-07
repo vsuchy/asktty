@@ -5,7 +5,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "irb", require: false
-gem "rake", "~> 13.3", require: false
+gem "rake", require: false
 
 gem "minitest", "~> 6.0", require: false
 

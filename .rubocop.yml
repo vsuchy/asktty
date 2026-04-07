@@ -1,3 +1,6 @@
+AllCops:
+  NewCops: enable
+
 plugins:
   - rubocop-minitest
   - rubocop-rake
@@ -5,6 +8,9 @@ plugins:
 # --- Disabled ---
 
 Metrics:
+  Enabled: false
+
+Style/Documentation:
   Enabled: false
 
 # --- Overrides ---

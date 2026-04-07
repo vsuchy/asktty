@@ -1,52 +1,20 @@
-# AskTTY
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-> Note: AskTTY is still under development and has not been released to RubyGems yet.
+require_relative "../lib/asktty"
 
-A Ruby gem for interactive terminal prompts.
-
-## Installation
-
-Install it globaly:
-
-```sh
-gem install asktty
-```
-
-or, add it to your application gemfile:
-
-```sh
-bundle add asktty
-```
-
-## Usage
-
-```ruby
-require "asktty"
-```
-
-### Input Prompt
-
-```ruby
 name = AskTTY::InputPrompt.ask(
   title: "Name",
   details: "Enter the name you want displayed on your badge.",
   placeholder: "Vlad"
 )
-```
 
-### Text Prompt
-
-```ruby
-notes = AskTTY::TextPrompt.ask(
+project = AskTTY::TextPrompt.ask(
   title: "Ruby Project",
   placeholder: "AskTTY\nTerminal prompts for Ruby"
 )
-```
 
-### Select Prompt
-
-```ruby
-drink = AskTTY::SelectPrompt.ask(
+experience = AskTTY::SelectPrompt.ask(
   title: "Experience Level",
   options: [
     { label: "Beginner", value: :beginner },
@@ -55,12 +23,8 @@ drink = AskTTY::SelectPrompt.ask(
   ],
   value: :intermediate
 )
-```
 
-### MultiSelect Prompt
-
-```ruby
-toppings = AskTTY::MultiSelectPrompt.ask(
+topics = AskTTY::MultiSelectPrompt.ask(
   title: "Topics",
   details: "Select all topics you are interested in.",
   options: [
@@ -72,26 +36,16 @@ toppings = AskTTY::MultiSelectPrompt.ask(
   ],
   values: [:metaprogramming]
 )
-```
 
-### Confirm Prompt
-
-```ruby
 confirmed = AskTTY::ConfirmPrompt.ask(
   title: "Confirmation",
   details: "Confirm that you plan to attend the event.",
-  value: true
+  value: false
 )
-```
 
-## Examples
-
-Run the interactive example from the project root:
-
-```sh
-ruby examples/all_prompts.rb
-```
-
-## Credit
-
-The prompt UI in AskTTY is based on [huh?](https://github.com/charmbracelet/huh).
+puts
+puts "Name: #{name}"
+puts "Ruby Project: #{project.inspect}"
+puts "Experience: #{experience}"
+puts "Topics: #{topics.join(', ')}"
+puts "Confirmed: #{confirmed}"
