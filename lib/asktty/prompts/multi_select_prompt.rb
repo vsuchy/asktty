@@ -47,6 +47,7 @@ module AskTTY
 
       lines = header_lines(content_width)
       lines.concat(option_lines(content_width))
+      lines.concat(help_lines(content_width))
 
       Internal::Rendering.frame(lines)
     end
@@ -74,6 +75,16 @@ module AskTTY
 
         wrap_option(option.label, cursor: cursor, prefix: prefix, width: content_width, &style)
       end
+    end
+
+    def help_lines(content_width)
+      [
+        "",
+        Internal::Rendering.help_line(
+          ["enter (submit)", "up/down (select item)", "space (toggle item)"],
+          width: content_width
+        )
+      ]
     end
 
     def wrap_option(label, cursor:, prefix:, width:, &style)

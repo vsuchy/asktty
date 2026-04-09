@@ -42,6 +42,7 @@ module AskTTY
 
       lines = header_lines(content_width)
       lines.concat(body_lines(value, content_width: content_width, show_cursor: show_cursor))
+      lines.concat(help_lines(content_width))
 
       Internal::Rendering.frame(lines)
     end
@@ -96,6 +97,10 @@ module AskTTY
         style: Internal::ANSIStyle.method(:text),
         show_cursor: show_cursor
       )
+    end
+
+    def help_lines(content_width)
+      ["", Internal::Rendering.help_line(["enter (submit)"], width: content_width)]
     end
 
     def render_segments(segments, first_prefix:, continuation_prefix:, style:, show_cursor: false)

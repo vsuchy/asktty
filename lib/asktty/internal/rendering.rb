@@ -34,6 +34,31 @@ module AskTTY
         frame(style_submitted_lines(lines, title_length: graphemes(prefix).length))
       end
 
+      def help_line(items, width:)
+        items = Array(items).map(&:to_s).reject(&:empty?)
+        return "" if items.empty?
+
+        line = +""
+        total_width = 0
+
+        items.each do |item|
+          segment = total_width.zero? ? item : " • #{item}"
+          segment_width = display_width(segment)
+
+          tail, add_segment = help_line_tail(total_width, segment_width, width)
+
+          unless add_segment
+            line << tail
+            break
+          end
+
+          line << segment
+          total_width += segment_width
+        end
+
+        ANSIStyle.muted(line)
+      end
+
       def wrap(text, width)
         split_lines(text.to_s).flat_map { |line| wrap_line(line, width) }
       end
@@ -44,6 +69,14 @@ module AskTTY
 
       def graphemes(text)
         text.scan(/\X/)
+      end
+
+      def help_line_tail(total_width, segment_width, width)
+        if width.to_i.positive? && total_width + segment_width > width && (total_width + display_width(" …") < width)
+          return [" …", false]
+        end
+
+        ["", true]
       end
 
       def split_lines(text)

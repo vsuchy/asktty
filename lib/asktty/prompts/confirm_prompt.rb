@@ -38,6 +38,7 @@ module AskTTY
       lines = header_lines(content_width)
       lines << "" unless lines.empty?
       lines.concat(button_lines(content_width))
+      lines.concat(help_lines(content_width))
 
       Internal::Rendering.frame(lines)
     end
@@ -70,6 +71,10 @@ module AskTTY
       raise AskTTY::Error, "terminal is too narrow for confirmation prompt" if button_width > content_width
 
       [yes_button, no_button]
+    end
+
+    def help_lines(content_width)
+      ["", Internal::Rendering.help_line(["enter (submit)", "left/right (select option)"], width: content_width)]
     end
   end
 end

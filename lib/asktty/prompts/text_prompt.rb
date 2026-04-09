@@ -44,6 +44,7 @@ module AskTTY
 
       lines = header_lines(content_width)
       lines.concat(body_lines(value, content_width: content_width, show_cursor: show_cursor))
+      lines.concat(help_lines(content_width))
 
       Internal::Rendering.frame(lines)
     end
@@ -99,6 +100,13 @@ module AskTTY
         current_prefix = index.zero? ? first_prefix : continuation_prefix
         current_prefix + Internal::ANSIStyle.muted(line)
       end
+    end
+
+    def help_lines(content_width)
+      [
+        "",
+        Internal::Rendering.short_help_line(["enter (submit)", "shift+enter/ctrl+j (new line)"], width: content_width)
+      ]
     end
 
     def printable?(character)
