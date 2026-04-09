@@ -26,6 +26,14 @@ module AskTTY
         content_lines.map { |line| "#{border} #{line}" }.join("\n")
       end
 
+      def submitted_frame(title, value, width:)
+        prefix = "#{title}:"
+        summary = value.to_s.empty? ? prefix : "#{prefix} #{value}"
+        lines = wrap(summary, content_width(width))
+
+        frame(style_submitted_lines(lines, title_length: graphemes(prefix).length))
+      end
+
       def wrap(text, width)
         split_lines(text.to_s).flat_map { |line| wrap_line(line, width) }
       end
@@ -42,6 +50,27 @@ module AskTTY
         return [""] if text.empty?
 
         text.split("\n", -1)
+      end
+
+      def style_submitted_lines(lines, title_length:)
+        remaining_title_length = title_length
+
+        lines.map do |line|
+          line_graphemes = graphemes(line)
+
+          if remaining_title_length >= line_graphemes.length
+            remaining_title_length -= line_graphemes.length
+            ANSIStyle.title(line)
+          elsif remaining_title_length.positive?
+            title_text = line_graphemes[0, remaining_title_length].join
+            value_text = line_graphemes[remaining_title_length..].to_a.join
+            remaining_title_length = 0
+
+            ANSIStyle.title(title_text) + ANSIStyle.text(value_text)
+          else
+            ANSIStyle.text(line)
+          end
+        end
       end
 
       def wrap_line(line, width)

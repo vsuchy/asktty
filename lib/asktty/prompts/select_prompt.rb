@@ -22,8 +22,8 @@ module AskTTY
 
           case session.read_key
           when :enter
-            session.render(render(width: session.width))
-            return @options[@index].value
+            session.render(submitted_render(width: session.width))
+            return selected_option.value
           when :up, "k"
             move(-1)
           when :down, "j"
@@ -42,6 +42,10 @@ module AskTTY
       lines.concat(option_lines(content_width))
 
       Internal::Rendering.frame(lines)
+    end
+
+    def submitted_render(width:)
+      Internal::Rendering.submitted_frame(@title, selected_option.label, width: width)
     end
 
     def header_lines(content_width)
@@ -79,6 +83,10 @@ module AskTTY
 
     def move(offset)
       @index = (@index + offset) % @options.length
+    end
+
+    def selected_option
+      @options[@index]
     end
   end
 end

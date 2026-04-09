@@ -19,7 +19,7 @@ module AskTTY
 
           case session.read_key
           when :enter
-            session.render(render(width: session.width))
+            session.render(submitted_render(width: session.width))
             return @value
           when :left, "h"
             @value = true
@@ -40,6 +40,10 @@ module AskTTY
       lines.concat(button_lines(content_width))
 
       Internal::Rendering.frame(lines)
+    end
+
+    def submitted_render(width:)
+      Internal::Rendering.submitted_frame(@title, @value ? "Yes" : "No", width: width)
     end
 
     def header_lines(content_width)

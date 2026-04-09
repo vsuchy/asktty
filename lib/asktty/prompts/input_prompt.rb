@@ -24,7 +24,7 @@ module AskTTY
 
           case key
           when :enter
-            session.render(render(value, width: session.width, show_cursor: false))
+            session.render(submitted_render(value, width: session.width))
             return value
           when :backspace
             value = Internal::Rendering.chop_grapheme(value)
@@ -44,6 +44,10 @@ module AskTTY
       lines.concat(body_lines(value, content_width: content_width, show_cursor: show_cursor))
 
       Internal::Rendering.frame(lines)
+    end
+
+    def submitted_render(value, width:)
+      Internal::Rendering.submitted_frame(@title, value, width: width)
     end
 
     def header_lines(content_width)
