@@ -91,21 +91,21 @@ module AskTTY
     end
 
     def placeholder_lines(content_width)
-      prefix = ">  "
-      first_prefix = Internal::ANSIStyle.prompt("> ") + Internal::ANSIStyle.cursor
-      continuation_prefix = " " * prefix.length
-      wrapped = Internal::Rendering.wrap_exact(@placeholder, [content_width - prefix.length, 1].max)
+      wrapped = Internal::Rendering.wrap_exact(@placeholder, [content_width - 2, 1].max)
+      wrapped = [""] if wrapped.empty?
 
       wrapped.each_with_index.map do |line, index|
-        current_prefix = index.zero? ? first_prefix : continuation_prefix
-        current_prefix + Internal::ANSIStyle.muted(line)
+        current_prefix = index.zero? ? Internal::ANSIStyle.prompt("> ") : "  "
+        text = index.zero? ? Internal::Rendering.placeholder_with_cursor(line) : Internal::ANSIStyle.muted(line)
+
+        current_prefix + text
       end
     end
 
     def help_lines(content_width)
       [
         "",
-        Internal::Rendering.short_help_line(["enter (submit)", "shift+enter/ctrl+j (new line)"], width: content_width)
+        Internal::Rendering.help_line(["enter (submit)", "shift+enter/ctrl+j (new line)"], width: content_width)
       ]
     end
 

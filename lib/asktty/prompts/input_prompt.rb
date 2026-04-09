@@ -60,7 +60,7 @@ module AskTTY
     end
 
     def body_lines(value, content_width:, show_cursor:)
-      return placeholder_lines(content_width, show_cursor: show_cursor) if @placeholder && value.empty? && show_cursor
+      return placeholder_lines(content_width) if @placeholder && value.empty? && show_cursor
       return [empty_line(show_cursor: show_cursor)] if value.empty?
 
       typed_value_lines(value, content_width: content_width, show_cursor: show_cursor)
@@ -72,17 +72,16 @@ module AskTTY
       line
     end
 
-    def placeholder_lines(content_width, show_cursor:)
-      prefix_width = show_cursor ? 3 : 2
-      first_prefix = +Internal::ANSIStyle.prompt("> ")
-      first_prefix << Internal::ANSIStyle.cursor if show_cursor
+    def placeholder_lines(content_width)
+      segments = Internal::Rendering.wrap_exact(@placeholder.to_s, [content_width - 2, 1].max)
+      segments = [""] if segments.empty?
 
-      render_segments(
-        Internal::Rendering.wrap_exact(@placeholder.to_s, [content_width - prefix_width, 1].max),
-        first_prefix: first_prefix,
-        continuation_prefix: " " * prefix_width,
-        style: Internal::ANSIStyle.method(:muted)
-      )
+      segments.each_with_index.map do |segment, index|
+        prefix = index.zero? ? Internal::ANSIStyle.prompt("> ") : "  "
+        text = index.zero? ? Internal::Rendering.placeholder_with_cursor(segment) : Internal::ANSIStyle.muted(segment)
+
+        prefix + text
+      end
     end
 
     def typed_value_lines(value, content_width:, show_cursor:)

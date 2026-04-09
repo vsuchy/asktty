@@ -59,6 +59,13 @@ module AskTTY
         ANSIStyle.muted(line)
       end
 
+      def placeholder_with_cursor(text)
+        first_grapheme, *rest = graphemes(text.to_s)
+        return ANSIStyle.cursor unless first_grapheme
+
+        ANSIStyle.style(first_grapheme, foreground: 8, background: 2) + ANSIStyle.muted(rest.join)
+      end
+
       def wrap(text, width)
         split_lines(text.to_s).flat_map { |line| wrap_line(line, width) }
       end
