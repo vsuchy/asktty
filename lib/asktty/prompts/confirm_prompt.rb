@@ -2,29 +2,41 @@
 
 module AskTTY
   class ConfirmPrompt
-    def self.ask(title:, details: nil, value: false)
-      new(title: title, details: details, value: value).ask
+    def self.ask(title:, details: nil, value: false, &validator)
+      new(title: title, details: details, value: value, validator: validator).ask
     end
 
-    def initialize(title:, details: nil, value: false)
+    def initialize(title:, details: nil, value: false, validator: nil)
       @title = title.to_s
       @details = details&.to_s
-      @value = !!value
+      raise AskTTY::Error, "value must be true or false" unless [true, false].include?(value)
+
+      @value = value
+      @validator = validator
     end
 
     def ask
+      validation_active = false
+
       Internal::Terminal.open do |session|
         loop do
-          session.render(render(width: session.width))
+          session.render(render(width: session.width, error_message: validation_message(validation_active)))
 
           case session.read_key
           when :enter
+            validation_active = true
+            next if validation_message(validation_active)
+
             session.render(submitted_render(width: session.width))
             return @value
           when :left, "h"
+            previous_value = @value
             @value = true
+            validation_active ||= @value != previous_value
           when :right, "l"
+            previous_value = @value
             @value = false
+            validation_active ||= @value != previous_value
           end
         end
       end
@@ -32,13 +44,13 @@ module AskTTY
 
     private
 
-    def render(width:)
+    def render(width:, error_message: nil)
       content_width = Internal::Rendering.content_width(width)
 
       lines = header_lines(content_width)
       lines << "" unless lines.empty?
       lines.concat(button_lines(content_width))
-      lines.concat(help_lines(content_width))
+      lines.concat(footer_lines(content_width, error_message: error_message))
 
       Internal::Rendering.frame(lines)
     end
@@ -73,8 +85,18 @@ module AskTTY
       [yes_button, no_button]
     end
 
-    def help_lines(content_width)
-      ["", Internal::Rendering.help_line(["enter (submit)", "left/right (select option)"], width: content_width)]
+    def footer_lines(content_width, error_message:)
+      Internal::Rendering.footer_lines(
+        error_message: error_message,
+        help_line: Internal::Rendering.help_line(
+          ["enter (submit)", "left/right (select option)"], width: content_width
+        ),
+        width: content_width
+      )
+    end
+
+    def validation_message(validation_active)
+      Internal::Validation.message_for(@value, @validator, active: validation_active)
     end
   end
 end

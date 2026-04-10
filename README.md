@@ -84,6 +84,16 @@ confirmed = AskTTY::ConfirmPrompt.ask(
 )
 ```
 
+### Validation
+
+Pass a block that returns `true` when the current value is valid, or an error message when it is not:
+
+```ruby
+name = AskTTY::InputPrompt.ask(title: "Name") do |value|
+  value.length >= 3 || "Name must be at least 3 characters"
+end
+```
+
 ## Examples
 
 Run the interactive example from the project root:

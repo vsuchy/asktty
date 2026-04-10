@@ -2,15 +2,16 @@
 
 module AskTTY
   class MultiSelectPrompt
-    def self.ask(title:, options:, details: nil, values: nil)
-      new(title: title, details: details, options: options, values: values).ask
+    def self.ask(title:, options:, details: nil, values: nil, &validator)
+      new(title: title, details: details, options: options, values: values, validator: validator).ask
     end
 
-    def initialize(title:, options:, details: nil, values: nil)
+    def initialize(title:, options:, details: nil, values: nil, validator: nil)
       @title = title.to_s
       @details = details&.to_s
       @options = Internal::Options.normalize(options)
       @selected_values = Array(values).uniq
+      @validator = validator
 
       option_values = Internal::Options.values(@options)
 
@@ -21,12 +22,17 @@ module AskTTY
     end
 
     def ask
+      validation_active = false
+
       Internal::Terminal.open do |session|
         loop do
-          session.render(render(width: session.width))
+          session.render(render(width: session.width, error_message: validation_message(validation_active)))
 
           case session.read_key
           when :enter
+            validation_active = true
+            next if validation_message(validation_active)
+
             session.render(submitted_render(width: session.width))
             return selected_results
           when :up, "k"
@@ -34,7 +40,9 @@ module AskTTY
           when :down, "j"
             move(1)
           when " "
+            previous_results = selected_results
             toggle_current
+            validation_active ||= selected_results != previous_results
           end
         end
       end
@@ -42,12 +50,12 @@ module AskTTY
 
     private
 
-    def render(width:)
+    def render(width:, error_message: nil)
       content_width = Internal::Rendering.content_width(width)
 
       lines = header_lines(content_width)
       lines.concat(option_lines(content_width))
-      lines.concat(help_lines(content_width))
+      lines.concat(footer_lines(content_width, error_message: error_message))
 
       Internal::Rendering.frame(lines)
     end
@@ -77,14 +85,14 @@ module AskTTY
       end
     end
 
-    def help_lines(content_width)
-      [
-        "",
-        Internal::Rendering.help_line(
-          ["enter (submit)", "up/down (select item)", "space (toggle item)"],
-          width: content_width
-        )
-      ]
+    def footer_lines(content_width, error_message:)
+      Internal::Rendering.footer_lines(
+        error_message: error_message,
+        help_line: Internal::Rendering.help_line(
+          ["enter (submit)", "up/down (select item)", "space (toggle item)"], width: content_width
+        ),
+        width: content_width
+      )
     end
 
     def wrap_option(label, cursor:, prefix:, width:, &style)
@@ -121,6 +129,10 @@ module AskTTY
       else
         @selected_values << value
       end
+    end
+
+    def validation_message(validation_active)
+      Internal::Validation.message_for(selected_results, @validator, active: validation_active)
     end
   end
 end
