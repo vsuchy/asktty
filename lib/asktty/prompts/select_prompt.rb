@@ -46,25 +46,15 @@ module AskTTY
     private
 
     def render(width:, error_message: nil)
-      content_width = Internal::Rendering.content_width(width)
-
-      lines = header_lines(content_width)
-      lines.concat(option_lines(content_width))
-      lines.concat(footer_lines(content_width, error_message: error_message))
-
-      Internal::Rendering.frame(lines)
+      Internal::Rendering.prompt_frame(
+        title: @title, details: @details, help_items: help_items, error_message: error_message, width: width
+      ) do |content_width|
+        option_lines(content_width)
+      end
     end
 
     def submitted_render(width:)
       Internal::Rendering.submitted_frame(@title, selected_option.label, width: width)
-    end
-
-    def header_lines(content_width)
-      lines = Internal::Rendering.wrap(@title, content_width).map { |line| Internal::ANSIStyle.title(line) }
-
-      return lines unless @details
-
-      lines + Internal::Rendering.wrap(@details, content_width).map { |line| Internal::ANSIStyle.muted(line) }
     end
 
     def option_lines(content_width)
@@ -76,21 +66,8 @@ module AskTTY
       end
     end
 
-    def footer_lines(content_width, error_message:)
-      Internal::Rendering.footer_lines(
-        error_message: error_message,
-        help_line: Internal::Rendering.help_line(["enter (submit)", "up/down (select item)"], width: content_width),
-        width: content_width
-      )
-    end
-
-    def wrap_option(label, prefix:, width:, &style)
-      wrapped = Internal::Rendering.wrap(label, [width - 2, 1].max)
-
-      wrapped.each_with_index.map do |line, index|
-        current_prefix = index.zero? ? prefix : "  "
-        current_prefix + style.call(line)
-      end
+    def help_items
+      ["enter (submit)", "up/down (select item)"]
     end
 
     def index_for(value)
@@ -110,6 +87,15 @@ module AskTTY
 
     def validation_message(validation_active)
       Internal::Validation.message_for(selected_option.value, @validator, active: validation_active)
+    end
+
+    def wrap_option(label, prefix:, width:, &style)
+      wrapped = Internal::Rendering.wrap(label, [width - 2, 1].max)
+
+      wrapped.each_with_index.map do |line, index|
+        current_prefix = index.zero? ? prefix : "  "
+        current_prefix + style.call(line)
+      end
     end
   end
 end
