@@ -34,6 +34,22 @@ module AskTTY
         frame(style_submitted_lines(lines, title_length: graphemes(prefix).length))
       end
 
+      def footer_lines(error_message:, help_line:, width:)
+        lines = []
+
+        if error_message && !error_message.empty?
+          lines.concat(wrap(error_message, width).map do |line|
+            ANSIStyle.error(line)
+          end)
+        end
+
+        lines << help_line if help_line && !help_line.empty?
+
+        return [] if lines.empty?
+
+        [""] + lines
+      end
+
       def help_line(items, width:)
         items = Array(items).map(&:to_s).reject(&:empty?)
         return "" if items.empty?
