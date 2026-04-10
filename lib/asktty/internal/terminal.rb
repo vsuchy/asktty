@@ -7,24 +7,16 @@ module AskTTY
     class Terminal
       attr_reader :width
 
-      def self.open
+      def self.open(&)
         raise AskTTY::Error, "interactive prompts require a TTY input and output" unless $stdin.tty? && $stdout.tty?
 
-        terminal = new(input: $stdin, output: $stdout)
-
-        terminal.open do |live_terminal|
-          yield live_terminal
-        ensure
-          live_terminal.finish
-        end
+        new(input: $stdin, output: $stdout).open(&)
       end
 
       def initialize(input:, output:)
         @input = input
         @output = output
         @line_count = 0
-        @finished = false
-
         @width = output.winsize[1]
         @width = 80 if @width.nil? || @width <= 0
       rescue StandardError
@@ -39,33 +31,8 @@ module AskTTY
           yield self
         end
       ensure
-        @output.print "\e[0m\e[?25h"
-        @output.flush
-      end
-
-      def render(text)
-        text = text.to_s
-
-        if @line_count > 1
-          @output.print "\e[#{@line_count - 1}F"
-        else
-          @output.print "\r"
-        end
-
-        @output.print "\e[J"
-        @output.print normalize_output(text)
-        @output.flush
-
-        @line_count = [text.split("\n", -1).length, 1].max
-      end
-
-      def finish
-        return if @finished
-
-        @finished = true
         @line_count = 0
-
-        @output.print "\e[0m\r\n"
+        @output.print "\e[0m\r\n\e[?25h"
         @output.flush
       end
 
@@ -86,6 +53,22 @@ module AskTTY
         else
           character
         end
+      end
+
+      def render(text)
+        text = text.to_s
+
+        if @line_count > 1
+          @output.print "\e[#{@line_count - 1}F"
+        else
+          @output.print "\r"
+        end
+
+        @output.print "\e[J"
+        @output.print normalize_output(text)
+        @output.flush
+
+        @line_count = [text.split("\n", -1).length, 1].max
       end
 
       private

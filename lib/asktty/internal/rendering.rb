@@ -11,19 +11,30 @@ module AskTTY
         graphemes(text.to_s)[0...-1].join
       end
 
-      def content_width(width)
-        [width.to_i - 2, 1].max
-      end
-
       def display_width(text)
         Unicode::DisplayWidth.of(text.to_s.gsub(/\e\[[\d;]*m/, ""), ambiguous: 1)
       end
 
-      def frame(lines)
-        content_lines = Array(lines).flat_map { |line| split_lines(line.to_s) }
-        border = ANSIStyle.muted("┃")
+      def placeholder_with_cursor(text)
+        first_grapheme, *rest = graphemes(text.to_s)
+        return ANSIStyle.cursor unless first_grapheme
 
-        content_lines.map { |line| "#{border} #{line}" }.join("\n")
+        ANSIStyle.style(first_grapheme, foreground: 8, background: 2) + ANSIStyle.muted(rest.join)
+      end
+
+      def prompt_frame(title:, details:, help_items:, error_message:, width:, gap_before_body: false)
+        content_width = self.content_width(width)
+
+        lines = header_lines(title, details, width: content_width)
+        lines << "" if gap_before_body && !lines.empty?
+        lines.concat(Array(yield(content_width)))
+        lines.concat(
+          footer_lines(
+            error_message: error_message, help_line: help_line(help_items, width: content_width), width: content_width
+          )
+        )
+
+        frame(lines)
       end
 
       def submitted_frame(title, value, width:)
@@ -32,6 +43,22 @@ module AskTTY
         lines = wrap(summary, content_width(width))
 
         frame(style_submitted_lines(lines, title_length: graphemes(prefix).length))
+      end
+
+      def wrap(text, width)
+        split_lines(text.to_s).flat_map { |line| wrap_line(line, width) }
+      end
+
+      def wrap_exact(text, width)
+        split_lines(text.to_s).flat_map { |line| wrap_exact_line(line, width) }
+      end
+
+      def header_lines(title, details, width:)
+        lines = wrap(title.to_s, width).map { |line| ANSIStyle.title(line) }
+
+        return lines unless details
+
+        lines + wrap(details.to_s, width).map { |line| ANSIStyle.muted(line) }
       end
 
       def footer_lines(error_message:, help_line:, width:)
@@ -61,10 +88,8 @@ module AskTTY
           segment = total_width.zero? ? item : " • #{item}"
           segment_width = display_width(segment)
 
-          tail, add_segment = help_line_tail(total_width, segment_width, width)
-
-          unless add_segment
-            line << tail
+          if width.to_i.positive? && total_width + segment_width > width
+            line << " …" if total_width + display_width(" …") <= width
             break
           end
 
@@ -72,34 +97,24 @@ module AskTTY
           total_width += segment_width
         end
 
+        return "" if line.empty?
+
         ANSIStyle.muted(line)
       end
 
-      def placeholder_with_cursor(text)
-        first_grapheme, *rest = graphemes(text.to_s)
-        return ANSIStyle.cursor unless first_grapheme
-
-        ANSIStyle.style(first_grapheme, foreground: 8, background: 2) + ANSIStyle.muted(rest.join)
+      def content_width(width)
+        [width.to_i - 2, 1].max
       end
 
-      def wrap(text, width)
-        split_lines(text.to_s).flat_map { |line| wrap_line(line, width) }
-      end
+      def frame(lines)
+        content_lines = Array(lines).flat_map { |line| split_lines(line.to_s) }
+        border = ANSIStyle.muted("┃")
 
-      def wrap_exact(text, width)
-        split_lines(text.to_s).flat_map { |line| wrap_exact_line(line, width) }
+        content_lines.map { |line| "#{border} #{line}" }.join("\n")
       end
 
       def graphemes(text)
         text.scan(/\X/)
-      end
-
-      def help_line_tail(total_width, segment_width, width)
-        if width.to_i.positive? && total_width + segment_width > width && (total_width + display_width(" …") < width)
-          return [" …", false]
-        end
-
-        ["", true]
       end
 
       def split_lines(text)

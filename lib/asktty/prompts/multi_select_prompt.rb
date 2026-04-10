@@ -10,12 +10,12 @@ module AskTTY
       @title = title.to_s
       @details = details&.to_s
       @options = Internal::Options.normalize(options)
-      @selected_values = Array(values).uniq
+      @values = Array(values).uniq
       @validator = validator
 
       option_values = Internal::Options.values(@options)
 
-      unknown_values = @selected_values - option_values
+      unknown_values = @values - option_values
       raise AskTTY::Error, "values contain unknown option values" unless unknown_values.empty?
 
       @index = first_selected_index || 0
@@ -51,13 +51,11 @@ module AskTTY
     private
 
     def render(width:, error_message: nil)
-      content_width = Internal::Rendering.content_width(width)
-
-      lines = header_lines(content_width)
-      lines.concat(option_lines(content_width))
-      lines.concat(footer_lines(content_width, error_message: error_message))
-
-      Internal::Rendering.frame(lines)
+      Internal::Rendering.prompt_frame(
+        title: @title, details: @details, help_items: help_items, error_message: error_message, width: width
+      ) do |content_width|
+        option_lines(content_width)
+      end
     end
 
     def submitted_render(width:)
@@ -66,18 +64,10 @@ module AskTTY
       Internal::Rendering.submitted_frame(@title, labels, width: width)
     end
 
-    def header_lines(content_width)
-      lines = Internal::Rendering.wrap(@title, content_width).map { |line| Internal::ANSIStyle.title(line) }
-
-      return lines unless @details
-
-      lines + Internal::Rendering.wrap(@details, content_width).map { |line| Internal::ANSIStyle.muted(line) }
-    end
-
     def option_lines(content_width)
       @options.each_with_index.flat_map do |option, index|
         cursor = index == @index ? Internal::ANSIStyle.prompt("> ") : "  "
-        selected = @selected_values.include?(option.value)
+        selected = @values.include?(option.value)
         prefix = selected ? Internal::ANSIStyle.selected("[•] ") : Internal::ANSIStyle.text("[ ] ")
         style = selected ? Internal::ANSIStyle.method(:selected) : Internal::ANSIStyle.method(:text)
 
@@ -85,14 +75,38 @@ module AskTTY
       end
     end
 
-    def footer_lines(content_width, error_message:)
-      Internal::Rendering.footer_lines(
-        error_message: error_message,
-        help_line: Internal::Rendering.help_line(
-          ["enter (submit)", "up/down (select item)", "space (toggle item)"], width: content_width
-        ),
-        width: content_width
-      )
+    def first_selected_index
+      @options.index { |option| @values.include?(option.value) }
+    end
+
+    def help_items
+      ["enter (submit)", "up/down (select item)", "space (toggle item)"]
+    end
+
+    def move(offset)
+      @index = (@index + offset) % @options.length
+    end
+
+    def selected_options
+      @options.select { |option| @values.include?(option.value) }
+    end
+
+    def selected_results
+      selected_options.map(&:value)
+    end
+
+    def toggle_current
+      value = @options[@index].value
+
+      if @values.include?(value)
+        @values.delete(value)
+      else
+        @values << value
+      end
+    end
+
+    def validation_message(validation_active)
+      Internal::Validation.message_for(selected_results, @validator, active: validation_active)
     end
 
     def wrap_option(label, cursor:, prefix:, width:, &style)
@@ -103,36 +117,6 @@ module AskTTY
         current_prefix = index.zero? ? cursor + prefix : (" " * prefix_width)
         current_prefix + style.call(line)
       end
-    end
-
-    def first_selected_index
-      @options.index { |option| @selected_values.include?(option.value) }
-    end
-
-    def selected_options
-      @options.select { |option| @selected_values.include?(option.value) }
-    end
-
-    def selected_results
-      selected_options.map(&:value)
-    end
-
-    def move(offset)
-      @index = (@index + offset) % @options.length
-    end
-
-    def toggle_current
-      value = @options[@index].value
-
-      if @selected_values.include?(value)
-        @selected_values.delete(value)
-      else
-        @selected_values << value
-      end
-    end
-
-    def validation_message(validation_active)
-      Internal::Validation.message_for(selected_results, @validator, active: validation_active)
     end
   end
 end
