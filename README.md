@@ -1,7 +1,5 @@
 # AskTTY
 
-> Note: AskTTY is still under development and has not been released to RubyGems yet.
-
 A Ruby gem for interactive terminal prompts.
 
 ## Installation
