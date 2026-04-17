@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    asktty (1.0.0)
+    asktty (1.0.1)
       unicode-display_width (~> 3.2)
 
 GEM
@@ -86,7 +86,7 @@ DEPENDENCIES
   rubocop-rake (~> 0.7)
 
 CHECKSUMS
-  asktty (1.0.0)
+  asktty (1.0.1)
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   date (3.5.1) sha256=750d06384d7b9c15d562c76291407d89e368dda4d4fff957eb94962d325a0dc0
   drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
