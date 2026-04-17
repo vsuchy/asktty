@@ -99,7 +99,13 @@ module AskTTY
 
         return "" if line.empty?
 
-        ANSIStyle.muted(line)
+        line.split(/(\([^)]*\))/).reject(&:empty?).map do |segment|
+          if segment.start_with?("(") && segment.end_with?(")")
+            ANSIStyle.muted(segment)
+          else
+            ANSIStyle.text(segment)
+          end
+        end.join
       end
 
       def content_width(width)
