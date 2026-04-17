@@ -2,6 +2,8 @@
 
 A Ruby gem for interactive terminal prompts.
 
+<img src="https://raw.githubusercontent.com/vsuchy/asktty/refs/heads/main/assets/demo/demo.gif" alt="AskTTY Demo" width="600">
+
 ## Installation
 
 Install it globaly:
